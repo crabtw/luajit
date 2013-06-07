@@ -142,6 +142,7 @@ enum {
 #define CFRAME_SIZE		184
 #define CFRAME_SHIFT_MULTRES	3
 #elif LJ_TARGET_MIPS
+#if LJ_ARCH_HASFPU
 #define CFRAME_OFS_ERRF		124
 #define CFRAME_OFS_NRES		120
 #define CFRAME_OFS_PREV		116
@@ -149,6 +150,15 @@ enum {
 #define CFRAME_OFS_PC		20
 #define CFRAME_OFS_MULTRES	16
 #define CFRAME_SIZE		112
+#else
+#define CFRAME_OFS_ERRF		76
+#define CFRAME_OFS_NRES		72
+#define CFRAME_OFS_PREV		68
+#define CFRAME_OFS_L		64
+#define CFRAME_OFS_PC		20
+#define CFRAME_OFS_MULTRES	16
+#define CFRAME_SIZE		64
+#endif
 #define CFRAME_SHIFT_MULTRES	3
 #else
 #error "Missing CFRAME_* definitions for this architecture"

@@ -377,6 +377,7 @@
 
 #elif LJ_TARGET_MIPS
 /* -- MIPS calling conventions -------------------------------------------- */
+/* FIXME: SOFTFP */
 
 #define CCALL_HANDLE_STRUCTRET \
   cc->retref = 1;  /* Return all structs by reference. */ \

@@ -112,8 +112,10 @@ static void emit_lsptr(ASMState *as, MIPSIns mi, Reg r, void *p, RegSet allow)
   emit_tsi(as, mi, r, base, i);
 }
 
+#if !LJ_SOFTFP
 #define emit_loadn(as, r, tv) \
   emit_lsptr(as, MIPSI_LDC1, ((r) & 31), (void *)(tv), RSET_GPR)
+#endif
 
 /* Get/set global_State fields. */
 static void emit_lsglptr(ASMState *as, MIPSIns mi, Reg r, int32_t ofs)
@@ -172,30 +174,42 @@ static void emit_call(ASMState *as, void *target)
 /* Generic move between two regs. */
 static void emit_movrr(ASMState *as, IRIns *ir, Reg dst, Reg src)
 {
-  if (dst < RID_MAX_GPR)
-    emit_move(as, dst, src);
-  else
+#if LJ_SOFTFP
+  lua_assert(!irt_isnum(ir->t)); UNUSED(ir);
+#else
+  if (dst >= RID_MAX_GPR)
     emit_fg(as, irt_isnum(ir->t) ? MIPSI_MOV_D : MIPSI_MOV_S, dst, src);
+  else
+#endif
+    emit_move(as, dst, src);
 }
 
 /* Generic load of register from stack slot. */
 static void emit_spload(ASMState *as, IRIns *ir, Reg r, int32_t ofs)
 {
-  if (r < RID_MAX_GPR)
-    emit_tsi(as, MIPSI_LW, r, RID_SP, ofs);
-  else
+#if LJ_SOFTFP
+  lua_assert(!irt_isnum(ir->t)); UNUSED(ir);
+#else
+  if (r >= RID_MAX_GPR)
     emit_tsi(as, irt_isnum(ir->t) ? MIPSI_LDC1 : MIPSI_LWC1,
 	     (r & 31), RID_SP, ofs);
+  else
+#endif
+    emit_tsi(as, MIPSI_LW, r, RID_SP, ofs);
 }
 
 /* Generic store of register to stack slot. */
 static void emit_spstore(ASMState *as, IRIns *ir, Reg r, int32_t ofs)
 {
-  if (r < RID_MAX_GPR)
-    emit_tsi(as, MIPSI_SW, r, RID_SP, ofs);
-  else
+#if LJ_SOFTFP
+  lua_assert(!irt_isnum(ir->t)); UNUSED(ir);
+#else
+  if (r >= RID_MAX_GPR)
     emit_tsi(as, irt_isnum(ir->t) ? MIPSI_SDC1 : MIPSI_SWC1,
 	     (r&31), RID_SP, ofs);
+  else
+#endif
+    emit_tsi(as, MIPSI_SW, r, RID_SP, ofs);
 }
 
 /* Add offset to pointer. */

@@ -254,6 +254,9 @@
 #define LJ_ARCH_ENDIAN		LUAJIT_BE
 #endif
 #define LJ_ARCH_BITS		32
+#if !defined(LJ_ARCH_HASFPU) && __mips_soft_float
+#define LJ_ARCH_HASFPU		0
+#endif
 #define LJ_TARGET_MIPS		1
 #define LJ_TARGET_EHRETREG	4
 #define LJ_TARGET_JUMPRANGE	27	/* 2*2^27 = 256MB-aligned region */
@@ -322,10 +325,6 @@
 #endif
 #if defined(_LP64)
 #error "No support for PowerPC 64 bit mode"
-#endif
-#elif LJ_TARGET_MIPS
-#if defined(__mips_soft_float)
-#error "No support for MIPS CPUs without FPU"
 #endif
 #endif
 #endif

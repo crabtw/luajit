@@ -1584,6 +1584,7 @@ static void asm_tail_link(ASMState *as)
 /* -- Trace setup --------------------------------------------------------- */
 
 /* Clear reg/sp for all instructions and add register hints. */
+/* FIXME: SOFTFP */
 static void asm_setup_regsp(ASMState *as)
 {
   GCtrace *T = as->T;

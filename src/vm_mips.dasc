@@ -1,3 +1,4 @@
+|// FIXME: SOFTFP
 |// Low-level VM code for MIPS CPUs.
 |// Bytecode interpreter, fast functions and helper functions.
 |// Copyright (C) 2005-2013 Mike Pall. See Copyright Notice in luajit.h
@@ -63,6 +64,7 @@
 |.define FRET2,		f2
 |
 |// Stack layout while in interpreter. Must match with lj_frame.h.
+|.if FPU
 |.define CFRAME_SPACE,	112	// Delta for sp.
 |
 |.define SAVE_ERRF,	124(sp)	// 32 bit C frame info.
@@ -79,10 +81,28 @@
 |.define CSAVE_2,	4(sp)
 |.define CSAVE_1,	0(sp)
 |//----- 8 byte aligned, ^^^^ 16 byte register save area, owned by callee.
+|.else
+|.define CFRAME_SPACE,	64	// Delta for sp.
+|
+|.define SAVE_ERRF,	76(sp)	// 32 bit C frame info.
+|.define SAVE_NRES,	72(sp)
+|.define SAVE_CFRAME,	68(sp)
+|.define SAVE_L,	64(sp)
+|//----- 8 byte aligned, ^^^^ 16 byte register save area, owned by interpreter.
+|.define SAVE_GPR_,	24	// .. 24+10*4: 32 bit GPR saves.
+|.define SAVE_PC,	20(sp)
+|.define ARG5,		16(sp)
+|.define CSAVE_4,	12(sp)
+|.define CSAVE_3,	8(sp)
+|.define CSAVE_2,	4(sp)
+|.define CSAVE_1,	0(sp)
+|//----- 8 byte aligned, ^^^^ 16 byte register save area, owned by callee.
+|.endif
 |
 |.define ARG5_OFS,	16
 |.define SAVE_MULTRES,	ARG5
 |
+|.if FPU
 |.macro saveregs
 |  addiu sp, sp, -CFRAME_SPACE
 |  sw ra, SAVE_GPR_+9*4(sp)
@@ -123,6 +143,36 @@
 |  jr ra
 |  addiu sp, sp, CFRAME_SPACE
 |.endmacro
+|.else
+|.macro saveregs
+|  addiu sp, sp, -CFRAME_SPACE
+|  sw ra, SAVE_GPR_+9*4(sp)
+|  sw r30, SAVE_GPR_+8*4(sp)
+|  sw r23, SAVE_GPR_+7*4(sp)
+|  sw r22, SAVE_GPR_+6*4(sp)
+|  sw r21, SAVE_GPR_+5*4(sp)
+|  sw r20, SAVE_GPR_+4*4(sp)
+|  sw r19, SAVE_GPR_+3*4(sp)
+|  sw r18, SAVE_GPR_+2*4(sp)
+|  sw r17, SAVE_GPR_+1*4(sp)
+|  sw r16, SAVE_GPR_+0*4(sp)
+|.endmacro
+|
+|.macro restoreregs_ret
+|  lw ra, SAVE_GPR_+9*4(sp)
+|  lw r30, SAVE_GPR_+8*4(sp)
+|  lw r23, SAVE_GPR_+7*4(sp)
+|  lw r22, SAVE_GPR_+6*4(sp)
+|  lw r21, SAVE_GPR_+5*4(sp)
+|  lw r20, SAVE_GPR_+4*4(sp)
+|  lw r19, SAVE_GPR_+3*4(sp)
+|  lw r18, SAVE_GPR_+2*4(sp)
+|  lw r17, SAVE_GPR_+1*4(sp)
+|  lw r16, SAVE_GPR_+0*4(sp)
+|  jr ra
+|  addiu sp, sp, CFRAME_SPACE
+|.endmacro
+|.endif
 |
 |// Type definitions. Some of these are only used for documentation.
 |.type L,		lua_State,	LREG
@@ -353,9 +403,11 @@ static void build_subroutines(BuildCtx *ctx)
   |.   sll TMP2, TMP2, 3
   |1:
   |  addiu TMP1, TMP1, -8
-  |   ldc1 f0, 0(RA)
+  |   lw r2, 0(RA)
+  |   lw r3, 4(RA)
   |    addiu RA, RA, 8
-  |   sdc1 f0, 0(BASE)
+  |   sw r2, 0(BASE)
+  |   sw r3, 4(BASE)
   |  bnez TMP1, <1
   |.  addiu BASE, BASE, 8
   |

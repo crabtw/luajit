@@ -377,6 +377,7 @@ void lj_ccallback_mcode_free(CTState *cts)
     *(double *)dp = *(float *)dp;  /* FPRs always hold doubles. */
 
 #elif LJ_TARGET_MIPS
+/* FIXME: SOFTFP */
 
 #define CALLBACK_HANDLE_REGARG \
   if (isfp && nfpr < CCALL_NARG_FPR) {  /* Try to pass argument in FPRs. */ \
